@@ -1,0 +1,521 @@
+# Example Scripts for Home Assistant
+# These demonstrate reusable sequences with and without parameters
+
+# Simple script without parameters
+turn_off_downstairs:
+  alias: "Turn Off Downstairs"
+  description: "Turn off all lights and devices downstairs"
+  icon: mdi:lightbulb-off
+  sequence:
+    - action: light.turn_off
+      target:
+        area_id:
+          - living_room
+          - kitchen
+          - dining_room
+    - action: media_player.turn_off
+      target:
+        area_id: living_room
+    - delay:
+        seconds: 2
+    - action: switch.turn_off
+      target:
+        entity_id: switch.coffee_maker
+
+# Script with parameters (fields)
+notify_person:
+  alias: "Send Notification"
+  description: "Send a notification with custom title and message"
+  mode: parallel
+  max: 10
+  fields:
+    target:
+      description: "The notification service to use"
+      example: "mobile_app_iphone"
+      required: true
+      selector:
+        text:
+    title:
+      description: "Notification title"
+      example: "Home Assistant"
+      required: true
+      selector:
+        text:
+    message:
+      description: "Notification message"
+      example: "Hello World"
+      required: true
+      selector:
+        text:
+    priority:
+      description: "Priority level"
+      example: "normal"
+      default: "normal"
+      selector:
+        select:
+          options:
+            - "normal"
+            - "high"
+            - "critical"
+  sequence:
+    - action: "notify.{{ target }}"
+      data:
+        title: "{{ title }}"
+        message: "{{ message }}"
+        data:
+          priority: "{{ priority }}"
+
+# Script with light control parameters
+set_room_scene:
+  alias: "Set Room Scene"
+  description: "Control lights in a room with custom settings"
+  fields:
+    room:
+      description: "Room entity ID"
+      example: "light.living_room"
+      required: true
+      selector:
+        entity:
+          domain: light
+    brightness:
+      description: "Brightness percentage (0-100)"
+      example: 80
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    color:
+      description: "Color name"
+      example: "blue"
+      default: "white"
+      selector:
+        select:
+          options:
+            - "white"
+            - "red"
+            - "green"
+            - "blue"
+            - "yellow"
+            - "purple"
+    transition:
+      description: "Transition time in seconds"
+      example: 2
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          unit_of_measurement: "s"
+  sequence:
+    - action: light.turn_on
+      target:
+        entity_id: "{{ room }}"
+      data:
+        brightness_pct: "{{ brightness }}"
+        color_name: "{{ color }}"
+        transition: "{{ transition }}"
+
+# Morning routine with delays
+morning_routine:
+  alias: "Morning Routine"
+  description: "Gradual wake-up sequence"
+  mode: restart
+  sequence:
+    # Start bedroom lights at low brightness
+    - action: light.turn_on
+      target:
+        entity_id: light.bedroom
+      data:
+        brightness_pct: 10
+        color_temp: 454
+    
+    # Gradually increase brightness
+    - delay:
+        minutes: 5
+    - action: light.turn_on
+      target:
+        entity_id: light.bedroom
+      data:
+        brightness_pct: 30
+        transition: 60
+    
+    - delay:
+        minutes: 10
+    - action: light.turn_on
+      target:
+        entity_id: light.bedroom
+      data:
+        brightness_pct: 60
+        transition: 120
+    
+    # Turn on bathroom light
+    - delay:
+        minutes: 5
+    - action: light.turn_on
+      target:
+        entity_id: light.bathroom
+      data:
+        brightness_pct: 100
+    
+    # Start coffee maker
+    - action: switch.turn_on
+      target:
+        entity_id: switch.coffee_maker
+    
+    # Play morning playlist
+    - delay:
+        minutes: 2
+    - action: media_player.play_media
+      target:
+        entity_id: media_player.bedroom_speaker
+      data:
+        media_content_type: playlist
+        media_content_id: "spotify:playlist:morning"
+
+# Script with conditional logic
+smart_thermostat_control:
+  alias: "Smart Thermostat Control"
+  description: "Adjust thermostat based on conditions"
+  fields:
+    target_temp:
+      description: "Target temperature"
+      example: 22
+      required: true
+      selector:
+        number:
+          min: 15
+          max: 30
+          unit_of_measurement: "°C"
+  sequence:
+    - choose:
+        # If someone is home
+        - conditions:
+            - condition: template
+              value_template: >
+                {{
+                  states.person
+                  | selectattr('state', 'eq', 'home')
+                  | list | count > 0
+                }}
+          sequence:
+            - action: climate.set_temperature
+              target:
+                entity_id: climate.thermostat
+              data:
+                temperature: "{{ target_temp }}"
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.thermostat
+              data:
+                hvac_mode: "auto"
+        
+        # If no one is home
+        - conditions:
+            - condition: template
+              value_template: >
+                {{
+                  states.person
+                  | selectattr('state', 'eq', 'home')
+                  | list | count == 0
+                }}
+          sequence:
+            - action: climate.set_temperature
+              target:
+                entity_id: climate.thermostat
+              data:
+                temperature: "{{ target_temp - 3 }}"
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.thermostat
+              data:
+                hvac_mode: "auto"
+
+# Script that calls another script
+good_night:
+  alias: "Good Night"
+  description: "Execute bedtime routine"
+  sequence:
+    # Lock all doors
+    - action: lock.lock
+      target:
+        entity_id: all
+    
+    # Call script to turn off downstairs
+    - action: script.turn_off_downstairs
+    
+    # Set bedroom scene
+    - action: script.set_room_scene
+      data:
+        room: "light.bedroom"
+        brightness: 20
+        color: "red"
+        transition: 5
+    
+    # Set climate
+    - action: script.smart_thermostat_control
+      data:
+        target_temp: 18
+    
+    # Wait a bit
+    - delay:
+        minutes: 15
+    
+    # Turn off bedroom lights
+    - action: light.turn_off
+      target:
+        entity_id: light.bedroom
+      data:
+        transition: 10
+
+# Script with repeat loop
+flash_lights:
+  alias: "Flash Lights"
+  description: "Flash lights for notifications"
+  fields:
+    entity_id:
+      description: "Light to flash"
+      example: "light.living_room"
+      required: true
+      selector:
+        entity:
+          domain: light
+    count:
+      description: "Number of flashes"
+      example: 3
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 10
+    color:
+      description: "Flash color"
+      example: "red"
+      default: "red"
+      selector:
+        text:
+  sequence:
+    # Store current state
+    - variables:
+        original_state: "{{ states(entity_id) }}"
+        original_brightness: "{{ state_attr(entity_id, 'brightness') }}"
+    
+    # Flash the light
+    - repeat:
+        count: "{{ count }}"
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: "{{ entity_id }}"
+            data:
+              brightness: 255
+              color_name: "{{ color }}"
+          - delay:
+              milliseconds: 500
+          - action: light.turn_off
+            target:
+              entity_id: "{{ entity_id }}"
+          - delay:
+              milliseconds: 500
+    
+    # Restore original state
+    - if:
+        - condition: template
+          value_template: "{{ original_state == 'on' }}"
+      then:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ entity_id }}"
+          data:
+            brightness: "{{ original_brightness }}"
+
+# Script with wait for trigger
+door_open_alert:
+  alias: "Door Open Alert"
+  description: "Alert if door left open too long"
+  mode: restart
+  fields:
+    door_sensor:
+      description: "Door sensor entity"
+      example: "binary_sensor.front_door"
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+    timeout_minutes:
+      description: "Minutes before alert"
+      example: 5
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: "min"
+  sequence:
+    - wait_for_trigger:
+        - trigger: state
+          entity_id: "{{ door_sensor }}"
+          to: "off"
+      timeout:
+        minutes: "{{ timeout_minutes }}"
+      continue_on_timeout: true
+    
+    - if:
+        - condition: template
+          value_template: "{{ wait.trigger == none }}"
+      then:
+        - action: script.notify_person
+          data:
+            target: "mobile_app_phone"
+            title: "Door Alert"
+            message: "{{ state_attr(door_sensor, 'friendly_name') }} has been open for {{ timeout_minutes }} minutes"
+            priority: "high"
+        
+        - action: script.flash_lights
+          data:
+            entity_id: "light.entry"
+            count: 5
+            color: "red"
+
+# TTS announcement script
+announce_message:
+  alias: "Announce Message"
+  description: "Make TTS announcement on all speakers"
+  fields:
+    message:
+      description: "Message to announce"
+      example: "Dinner is ready"
+      required: true
+      selector:
+        text:
+    volume:
+      description: "Volume level (0-1)"
+      example: 0.5
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 1
+          step: 0.1
+  sequence:
+    # Store current volumes
+    - variables:
+        speakers:
+          - media_player.living_room_speaker
+          - media_player.kitchen_speaker
+          - media_player.bedroom_speaker
+    
+    # Set volume
+    - action: media_player.volume_set
+      target:
+        entity_id: "{{ speakers }}"
+      data:
+        volume_level: "{{ volume }}"
+    
+    # Make announcement
+    - action: tts.google_say
+      target:
+        entity_id: "{{ speakers }}"
+      data:
+        message: "{{ message }}"
+
+# Parallel action script
+party_mode:
+  alias: "Party Mode"
+  description: "Activate party lighting and music"
+  sequence:
+    - parallel:
+        # Lights sequence
+        - sequence:
+            - action: light.turn_on
+              target:
+                area_id: living_room
+              data:
+                effect: "colorloop"
+                brightness: 255
+            - delay:
+                seconds: 1
+            - action: light.turn_on
+              target:
+                area_id: kitchen
+              data:
+                effect: "colorloop"
+                brightness: 255
+        
+        # Music sequence
+        - sequence:
+            - action: media_player.volume_set
+              target:
+                entity_id: media_player.living_room_speaker
+              data:
+                volume_level: 0.7
+            - action: media_player.play_media
+              target:
+                entity_id: media_player.living_room_speaker
+              data:
+                media_content_type: playlist
+                media_content_id: "spotify:playlist:party"
+        
+        # Notification
+        - action: notify.mobile_app_phone
+          data:
+            message: "Party mode activated! 🎉"
+
+# Advanced scene controller
+apply_scene_with_conditions:
+  alias: "Apply Scene with Conditions"
+  description: "Apply different scenes based on time and presence"
+  mode: restart
+  sequence:
+    - variables:
+        is_home: >
+          {{
+            states.person
+            | selectattr('state', 'eq', 'home')
+            | list | count > 0
+          }}
+        hour: "{{ now().hour }}"
+    
+    - choose:
+        # Morning scene (6-12)
+        - conditions:
+            - "{{ is_home }}"
+            - "{{ hour >= 6 and hour < 12 }}"
+          sequence:
+            - action: scene.turn_on
+              target:
+                entity_id: scene.morning
+        
+        # Afternoon scene (12-18)
+        - conditions:
+            - "{{ is_home }}"
+            - "{{ hour >= 12 and hour < 18 }}"
+          sequence:
+            - action: scene.turn_on
+              target:
+                entity_id: scene.afternoon
+        
+        # Evening scene (18-22)
+        - conditions:
+            - "{{ is_home }}"
+            - "{{ hour >= 18 and hour < 22 }}"
+          sequence:
+            - action: scene.turn_on
+              target:
+                entity_id: scene.evening
+        
+        # Night scene (22-6)
+        - conditions:
+            - "{{ is_home }}"
+            - "{{ hour >= 22 or hour < 6 }}"
+          sequence:
+            - action: scene.turn_on
+              target:
+                entity_id: scene.night
+      
+      # Default: Away scene
+      default:
+        - action: scene.turn_on
+          target:
+            entity_id: scene.away

@@ -1,0 +1,407 @@
+# Example Automations for Home Assistant
+# These demonstrate various trigger types, conditions, and actions
+
+# Basic state trigger - Turn on lights when door opens
+- alias: "Front Door - Turn on Lights"
+  description: "Turn on entry lights when front door opens after sunset"
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.front_door
+      from: "off"
+      to: "on"
+  conditions:
+    - condition: sun
+      after: sunset
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id:
+          - light.entry
+          - light.hallway
+      data:
+        brightness_pct: 100
+        transition: 2
+
+# Time-based trigger - Morning routine
+- alias: "Morning Routine"
+  description: "Start the day with lights and music"
+  triggers:
+    - trigger: time
+      at: "07:00:00"
+  conditions:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+    - condition: state
+      entity_id: person.john
+      state: "home"
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.bedroom
+      data:
+        brightness_pct: 30
+        transition: 30
+    - delay:
+        minutes: 5
+    - action: media_player.play_media
+      target:
+        entity_id: media_player.bedroom_speaker
+      data:
+        media_content_type: playlist
+        media_content_id: "spotify:playlist:morning"
+
+# Sunset automation with offset
+- alias: "Sunset Lights"
+  description: "Turn on outdoor lights 30 minutes before sunset"
+  triggers:
+    - trigger: sun
+      event: sunset
+      offset: "-00:30:00"
+  actions:
+    - action: light.turn_on
+      target:
+        area_id: outdoor
+      data:
+        brightness_pct: 80
+
+# Motion-based automation with timer
+- alias: "Bathroom Light - Motion"
+  description: "Turn on bathroom light on motion, turn off after 5 minutes"
+  mode: restart  # Restart timer if triggered again
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.bathroom_motion
+      to: "on"
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.bathroom
+    - wait_for_trigger:
+        - trigger: state
+          entity_id: binary_sensor.bathroom_motion
+          to: "off"
+    - delay:
+        minutes: 5
+    - action: light.turn_off
+      target:
+        entity_id: light.bathroom
+
+# Numeric state trigger - Temperature alert
+- alias: "High Temperature Alert"
+  description: "Notify when temperature exceeds threshold"
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.living_room_temperature
+      above: 26
+      for:
+        minutes: 10
+  actions:
+    - action: notify.mobile_app_phone
+      data:
+        title: "High Temperature"
+        message: >
+          Living room temperature is {{ states('sensor.living_room_temperature') }}°C
+        data:
+          priority: high
+
+# Template trigger - Complex condition
+- alias: "All Lights Off When Away"
+  description: "Turn off all lights when everyone leaves"
+  triggers:
+    - trigger: template
+      value_template: >
+        {{
+          states.person
+          | selectattr('state', 'eq', 'home')
+          | list | count == 0
+        }}
+  conditions:
+    - condition: template
+      value_template: >
+        {{
+          states.light
+          | selectattr('state', 'eq', 'on')
+          | list | count > 0
+        }}
+  actions:
+    - action: light.turn_off
+      target:
+        entity_id: all
+    - action: notify.mobile_app_phone
+      data:
+        message: "All lights turned off as everyone left"
+
+# Multiple triggers - Presence detection
+- alias: "Welcome Home"
+  description: "Actions when someone arrives home"
+  triggers:
+    - trigger: state
+      entity_id:
+        - person.john
+        - person.jane
+      to: "home"
+      for:
+        minutes: 2
+  conditions:
+    - condition: sun
+      after: sunset
+  actions:
+    - action: scene.turn_on
+      target:
+        entity_id: scene.welcome_home
+    - action: notify.mobile_app_phone
+      data:
+        message: "Welcome home, {{ trigger.to_state.attributes.friendly_name }}!"
+
+# Choose action based on condition
+- alias: "Climate Control"
+  description: "Adjust climate based on temperature"
+  triggers:
+    - trigger: time_pattern
+      minutes: "/15"  # Every 15 minutes
+  actions:
+    - choose:
+        - conditions:
+            - condition: numeric_state
+              entity_id: sensor.indoor_temperature
+              above: 24
+          sequence:
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.thermostat
+              data:
+                hvac_mode: cool
+            - action: climate.set_temperature
+              target:
+                entity_id: climate.thermostat
+              data:
+                temperature: 22
+        
+        - conditions:
+            - condition: numeric_state
+              entity_id: sensor.indoor_temperature
+              below: 18
+          sequence:
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.thermostat
+              data:
+                hvac_mode: heat
+            - action: climate.set_temperature
+              target:
+                entity_id: climate.thermostat
+              data:
+                temperature: 20
+      
+      default:
+        - action: climate.set_hvac_mode
+          target:
+            entity_id: climate.thermostat
+          data:
+            hvac_mode: "off"
+
+# If-then-else action
+- alias: "Garage Door Reminder"
+  description: "Remind if garage door left open at night"
+  triggers:
+    - trigger: time
+      at: "22:00:00"
+  actions:
+    - if:
+        - condition: state
+          entity_id: cover.garage_door
+          state: "open"
+      then:
+        - action: notify.mobile_app_phone
+          data:
+            title: "Garage Door Open"
+            message: "The garage door is still open!"
+            data:
+              actions:
+                - action: "close_garage"
+                  title: "Close Garage"
+        - repeat:
+            while:
+              - condition: state
+                entity_id: cover.garage_door
+                state: "open"
+              - condition: template
+                value_template: "{{ repeat.index <= 3 }}"
+            sequence:
+              - delay:
+                  minutes: 5
+              - action: notify.mobile_app_phone
+                data:
+                  message: "Garage door is still open! ({{ repeat.index }}/3)"
+      else:
+        - action: notify.mobile_app_phone
+          data:
+            message: "Garage door is closed. Good night!"
+
+# Parallel actions
+- alias: "Bedtime Routine"
+  description: "Execute multiple actions simultaneously"
+  triggers:
+    - trigger: time
+      at: input_datetime.bedtime
+  actions:
+    - parallel:
+        - sequence:
+            - action: light.turn_off
+              target:
+                area_id: living_room
+            - delay:
+                minutes: 1
+            - action: light.turn_off
+              target:
+                area_id: kitchen
+        
+        - action: climate.set_temperature
+          target:
+            entity_id: climate.bedroom
+          data:
+            temperature: 18
+        
+        - action: media_player.turn_off
+          target:
+            entity_id: media_player.living_room_tv
+        
+        - action: cover.close_cover
+          target:
+            entity_id: all
+
+# Webhook trigger
+- alias: "IFTTT Webhook"
+  description: "Handle webhook from IFTTT"
+  triggers:
+    - trigger: webhook
+      webhook_id: ifttt_button
+      local_only: false
+  actions:
+    - action: light.toggle
+      target:
+        entity_id: light.living_room
+    - action: notify.mobile_app_phone
+      data:
+        message: "Webhook triggered: {{ trigger.json.action }}"
+
+# Zone enter/leave
+- alias: "Arrived at Work"
+  description: "Actions when arriving at work"
+  triggers:
+    - trigger: zone
+      entity_id: device_tracker.phone
+      zone: zone.work
+      event: enter
+  conditions:
+    - condition: time
+      after: "07:00:00"
+      before: "10:00:00"
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  actions:
+    - action: climate.set_hvac_mode
+      target:
+        entity_id: climate.home_thermostat
+      data:
+        hvac_mode: "off"
+    - action: notify.mobile_app_phone
+      data:
+        message: "Home climate control turned off"
+
+# Repeat with count
+- alias: "Alarm Warning"
+  description: "Flash lights when alarm triggered"
+  triggers:
+    - trigger: state
+      entity_id: alarm_control_panel.home
+      to: "triggered"
+  actions:
+    - repeat:
+        count: 10
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.all_lights
+            data:
+              brightness: 255
+              color_name: red
+          - delay:
+              milliseconds: 500
+          - action: light.turn_off
+            target:
+              entity_id: light.all_lights
+          - delay:
+              milliseconds: 500
+    - action: notify.mobile_app_phone
+      data:
+        title: "ALARM TRIGGERED"
+        message: "Home alarm has been triggered!"
+        data:
+          priority: critical
+
+# Variables in automation
+- alias: "Adaptive Lighting"
+  description: "Adjust lights based on time of day"
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.living_room_motion
+      to: "on"
+  variables:
+    current_hour: "{{ now().hour }}"
+    is_night: "{{ current_hour >= 22 or current_hour < 6 }}"
+    brightness: >
+      {% if is_night %}
+        20
+      {% elif current_hour < 12 %}
+        80
+      {% else %}
+        100
+      {% endif %}
+    color_temp: >
+      {% if is_night %}
+        454
+      {% elif current_hour < 12 %}
+        250
+      {% else %}
+        350
+      {% endif %}
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.living_room
+      data:
+        brightness_pct: "{{ brightness }}"
+        color_temp: "{{ color_temp }}"
+
+# Wait for trigger
+- alias: "Shower Running Too Long"
+  description: "Alert if shower runs for more than 20 minutes"
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.bathroom_humidity
+      to: "on"
+  actions:
+    - wait_for_trigger:
+        - trigger: state
+          entity_id: binary_sensor.bathroom_humidity
+          to: "off"
+      timeout:
+        minutes: 20
+      continue_on_timeout: true
+    - if:
+        - condition: template
+          value_template: "{{ wait.trigger == none }}"
+      then:
+        - action: notify.mobile_app_phone
+          data:
+            message: "Shower has been running for over 20 minutes!"

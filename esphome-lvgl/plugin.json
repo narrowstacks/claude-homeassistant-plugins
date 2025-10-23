@@ -1,0 +1,8 @@
+{
+  "name": "esphome-lvgl",
+  "description": "Create and modify ESPHome display lambda code for graphical displays (OLED, E-Paper, TFT).",
+  "version": "1.0.0",
+  "author": {
+    "name": "narrowstacks"
+  }
+}

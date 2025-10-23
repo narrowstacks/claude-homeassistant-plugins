@@ -1,0 +1,23 @@
+{
+  "name": "claude-plugin-repo",
+  "owner": {
+    "name": "narrowstacks"
+  },
+  "plugins": [
+    {
+      "name": "homeassistant-config",
+      "source": "./homeassistant-config",
+      "description": "Skill to create, modify, and troubleshoot Home Assistant configuration files"
+    },
+    {
+      "name": "esphome-display",
+      "source": "./esphome-display",
+      "description": "Skill to create and modify ESPHome display lambda code for graphical displays (OLED, E-Paper, TFT)."
+    },
+    {
+      "name": "esphome-lvgl",
+      "source": "./esphome-lvgl",
+      "description": "Skill to create and modify ESPHome LVGL code for graphical displays (OLED, E-Paper, TFT)."
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+# Example Home Assistant Configuration
+# This is a well-organized configuration.yaml with includes
+
+# Default configuration from Home Assistant
+default_config:
+
+# Basic Information
+homeassistant:
+  name: Home
+  latitude: !secret latitude
+  longitude: !secret longitude
+  elevation: 0
+  unit_system: metric
+  time_zone: America/New_York
+  country: US
+  currency: USD
+  # Customize entities
+  customize: !include customize.yaml
+
+# Frontend
+frontend:
+  themes: !include_dir_merge_named themes/
+  
+# Enable the HTTP integration
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+
+# Text to speech
+tts:
+  - platform: google_translate
+    service_name: google_say
+
+# Enable logging
+logger:
+  default: info
+  logs:
+    homeassistant.components.automation: debug
+    homeassistant.components.mqtt: info
+
+# History and recorder
+recorder:
+  db_url: !secret db_url
+  purge_keep_days: 7
+  exclude:
+    domains:
+      - automation
+      - updater
+    entities:
+      - sensor.last_boot
+      - sensor.date
+
+history:
+  exclude:
+    domains:
+      - automation
+      - weblink
+      - updater
+
+# Automation, Scripts, and Scenes
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Or split into directories:
+# automation: !include_dir_merge_list automations/
+# script: !include_dir_merge_named scripts/
+# scene: !include scenes.yaml
+
+# Input components
+input_boolean: !include input_boolean.yaml
+input_number: !include input_number.yaml
+input_datetime: !include input_datetime.yaml
+input_text: !include input_text.yaml
+input_select: !include input_select.yaml
+
+# Groups
+group: !include groups.yaml
+
+# Sensors - merge all sensor files from sensors/ directory
+sensor: !include_dir_merge_list sensors/
+
+# Binary sensors
+binary_sensor: !include_dir_merge_list binary_sensors/
+
+# Template sensors and binary sensors
+template: !include templates.yaml
+
+# Switches
+switch: !include switches.yaml
+
+# Lights
+light: !include lights.yaml
+
+# Covers
+cover: !include covers.yaml
+
+# Notifications
+notify:
+  - platform: pushbullet
+    api_key: !secret pushbullet_api_key
+    name: pushbullet
+
+# MQTT
+mqtt:
+  sensor: !include_dir_merge_list mqtt/sensors/
+  binary_sensor: !include_dir_merge_list mqtt/binary_sensors/
+  light: !include_dir_merge_list mqtt/lights/
+  switch: !include_dir_merge_list mqtt/switches/
+
+# Media Players
+media_player:
+  - platform: spotify
+    client_id: !secret spotify_client_id
+    client_secret: !secret spotify_client_secret
+
+# Weather
+weather:
+  - platform: met
+    name: Home
+
+# Sun
+sun:
+
+# Person tracking
+person:
+  - name: John
+    id: john123
+    device_trackers:
+      - device_tracker.john_phone
+  - name: Jane
+    id: jane456
+    device_trackers:
+      - device_tracker.jane_phone
+
+# Zones
+zone:
+  - name: Work
+    latitude: !secret work_latitude
+    longitude: !secret work_longitude
+    radius: 100
+    icon: mdi:briefcase
+
+  - name: School
+    latitude: !secret school_latitude
+    longitude: !secret school_longitude
+    radius: 50
+    icon: mdi:school
+
+# Proximity
+proximity:
+  home:
+    zone: home
+    devices:
+      - device_tracker.john_phone
+      - device_tracker.jane_phone
+    tolerance: 50
+    unit_of_measurement: km
+
+# Optional: Use packages for better organization
+# Packages allow bundling related configurations together
+# homeassistant:
+#   packages: !include_dir_named packages/
