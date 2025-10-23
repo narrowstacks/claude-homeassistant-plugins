@@ -32,7 +32,7 @@ This marketplace contains plugins that extend Claude Code functionality with exp
 Add this repository as a plugin marketplace source:
 
 ```bash
-/plugin marketplace add claude-homeassistant-plugins https://github.com/narrowstacks/claude-homeassistant-plugins
+/plugin marketplace add narrowstacks/claude-homeassistant-plugins
 ```
 
 ### Step 2: Browse and Install Plugins
