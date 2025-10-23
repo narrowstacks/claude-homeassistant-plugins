@@ -18,6 +18,11 @@
       "name": "esphome-lvgl",
       "source": "./esphome-lvgl",
       "description": "Skill to create and modify ESPHome LVGL code for graphical displays (OLED, E-Paper, TFT)."
+    },
+    {
+      "name": "esphome-config",
+      "source": "./esphome-config",
+      "description": "Skill to create and modify ESPHome device configuration files."
     }
   ]
 }

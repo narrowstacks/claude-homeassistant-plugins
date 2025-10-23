@@ -1,0 +1,8 @@
+{
+  "name": "esphome-config",
+  "description": "Skill to create and modify ESPHome device configuration files.",
+  "version": "1.0.0",
+  "author": {
+    "name": "narrowstacks"
+  }
+}
