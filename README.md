@@ -5,7 +5,7 @@ and [ESPHome](https://esphome.io/).
 
 ## Overview
 
-This marketplace contains plugins that extend Claude Code functionality with expert skills for:
+This marketplace contains plugins that extend Claude Code functionality with skills for:
 
 - **Home Assistant Configuration** - Create, modify, and troubleshoot Home Assistant YAML configuration files
 - **ESPHome Configuration** - Configure ESP32/ESP8266 IoT devices with ESPHome firmware
@@ -72,14 +72,14 @@ Each plugin includes detailed documentation and skill definitions to guide you. 
 
 ## Plugin Development
 
-Each plugin in this marketplace follows the Claude plugin structure:
+Each plugin in this marketplace in general follows the Claude plugin structure:
 
-- `.claude-plugin/plugin.json` - Plugin metadata (name, description, version, author)
-- `<plugin name>/skills/` - Directory containing skill definitions
-- `<plugin name>/skills/<skill name>/SKILL.md` - Skill documentation and usage guidelines
-- `<plugin name>/skills/<skill name>/references` - (Optional) Additional reference markdown files.
-- `<plugin name>/skills/<skill name>/examples` - (Optional) Example files of the intended file type to be edited/created by Claude.
-- `<plugin name>/hooks/hooks.json` - Claude Code event handlers hooks.
+- `/.claude-plugin/plugin.json` - Plugin metadata (name, description, version, author)
+- `/skills/` - Directory containing skill definitions
+- `/skills/[skill-name]/SKILL.md` - Skill documentation and usage guidelines
+- `/skills/[skill-name]/references` - (Optional) Additional reference markdown files.
+- `/skills/[skill-name]/examples` - (Optional) Example files of the intended file type to be edited/created by Claude.
+- `/hooks/hooks.json` - Claude Code event handlers hooks.
 - `README.md` - Plugin-specific installation and usage information
 
 For more information on Claude plugin development, see the [Claude Code Plugins Documentation](https://docs.claude.com/en/docs/claude-code/plugins.md).
