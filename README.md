@@ -1,6 +1,7 @@
 # Claude Home Assistant Plugin Marketplace
 
-A collection of Claude plugins providing specialized skills for home automation and embedded systems configuration.
+A collection of Claude plugins providing specialized skills for - [Home Assistant](https://www.home-assistant.io/)
+and [ESPHome](https://esphome.io/).
 
 ## Overview
 
@@ -45,7 +46,7 @@ View available plugins and install interactively:
 
 Select "Browse Plugins" and choose the plugins you want to install.
 
-Alternatively, install a specific plugin directly:
+Alternatively, install a specific plugin directly after adding the marketplace:
 
 ```bash
 /plugin install homeassistant-config@claude-homeassistant-plugins
@@ -67,16 +68,19 @@ Once installed, each plugin provides specialized skills that can be invoked duri
 - Get assistance writing display lambda code for ESPHome
 - Configure LVGL interfaces for embedded displays
 
-Each plugin includes detailed documentation and skill definitions to guide you.
+Each plugin includes detailed documentation and skill definitions to guide you. To make sure Claude actually uses the skill, you can ask it to `Use [home assistant/esphome/etc] skill` in your prompt.
 
 ## Plugin Development
 
 Each plugin in this marketplace follows the Claude plugin structure:
 
-- `plugin.json` - Plugin metadata (name, description, version, author)
-- `SKILL.md` - Skill documentation and usage guidelines
+- `.claude-plugin/plugin.json` - Plugin metadata (name, description, version, author)
+- `<plugin name>/skills/` - Directory containing skill definitions
+- `<plugin name>/skills/<skill name>/SKILL.md` - Skill documentation and usage guidelines
+- `<plugin name>/skills/<skill name>/references` - (Optional) Additional reference markdown files.
+- `<plugin name>/skills/<skill name>/examples` - (Optional) Example files of the intended file type to be edited/created by Claude.
+- `<plugin name>/hooks/hooks.json` - Claude Code event handlers hooks.
 - `README.md` - Plugin-specific installation and usage information
-- `skills/` - Directory containing skill definitions
 
 For more information on Claude plugin development, see the [Claude Code Plugins Documentation](https://docs.claude.com/en/docs/claude-code/plugins.md).
 
@@ -92,11 +96,6 @@ Contributions are welcome! To add a new plugin to this marketplace:
 ## License
 
 This marketplace is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Repository
-
-- **Owner**: narrowstacks
-- **Repository**: https://github.com/narrowstacks/claude-homeassistant-plugins
 
 ## Support
 
