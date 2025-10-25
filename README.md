@@ -1,6 +1,6 @@
 # Claude Home Assistant Plugin Marketplace
 
-A collection of Claude plugins providing specialized skills for - [Home Assistant](https://www.home-assistant.io/)
+A collection of Claude plugins providing specialized skills for [Home Assistant](https://www.home-assistant.io/)
 and [ESPHome](https://esphome.io/).
 
 ## Overview
