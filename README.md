@@ -14,12 +14,12 @@ This marketplace contains plugins that extend Claude Code functionality with ski
 
 ## Available Plugins
 
-| Plugin                 | Description                                                         | Version |
-| ---------------------- | ------------------------------------------------------------------- | ------- |
-| `homeassistant-config` | Create, modify, and troubleshoot Home Assistant configuration files | 1.0.0   |
-| `esphome-config`       | Skill for ESPHome device configuration files                        | Latest  |
-| `esphome-display`      | Skill for ESPHome display lambda code                               | Latest  |
-| `esphome-lvgl`         | Skill for ESPHome LVGL config                                       | Latest  |
+| Plugin                 | Description                                                         |
+| ---------------------- | ------------------------------------------------------------------- |
+| `homeassistant-config` | Create, modify, and troubleshoot Home Assistant configuration files |
+| `esphome-config`       | Skill for ESPHome device configuration files                        |
+| `esphome-display`      | Skill specifically for ESPHome display lambda code                  |
+| `esphome-lvgl`         | Skill specifically for ESPHome LVGL display config                  |
 
 ## Installation
 
